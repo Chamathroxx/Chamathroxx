@@ -1,0 +1,149 @@
+from pyfirmata import Arduino,util,INPUT,OUTPUT
+import time
+board = Arduino ("COM4")
+
+
+lst=[]
+record_list=[]
+morse_code=[]
+cleanlst_morsecode=[]
+i=0
+count,count_0=0,0
+ldr_pin=5
+board . analog [ ldr_pin ]. mode = INPUT
+init = 0 ######
+
+it = util.Iterator ( board )
+
+it.start ()
+
+print("INPUT!")
+board . analog [ ldr_pin ]. enable_reporting ()
+
+def decoding_():
+        MORSE_CODE_DICT = { '-----':'0', '.----':'1',  '..---':'2', '...--':'3' , '....-':'4', '.....': '5',  '-....':'6', '--...':'7',  '---..':'8',  '----.':'9', '.-':'a','-...':'b',
+                            '-.-.':'c','-..':'d','.':'e','..-.':'f','--.':'g','....':'h','..':'i','.---':'j','-.-':'k','.-..':'l','--':'m','-.':'n','---':'o','.--.':'p','--.-':'q','.-.':'r',
+                            '...':'s','-':'t','..-':'u','...-':'v','.--':'w','-..-':'x','-.--':'y','--..':'z'}
+        print('decoded code is: ',end='')
+        for j in cleanlst_morsecode:
+            if j in MORSE_CODE_DICT:  
+                print(MORSE_CODE_DICT[j],end='')
+                
+def light_on(i):
+    global light
+    if ldr_val>i:
+        light=0
+    else:
+        light=1 
+    
+
+def initiat():
+    global i
+    #lst=[]
+    lst.append(ldr_val)
+    if len(lst)>2:
+        k=len(lst)
+        if lst[1]-lst[k-1]>0.2:
+            i=(lst[1]+lst[k-1])/2
+
+
+
+def time_gap():
+    start=time.time()
+    if light==0:
+        end=time.time()
+        morse_code.append(start)
+
+
+def clean_morsecode():
+    global words
+    count_00=0
+    words=''
+    
+    maxn=max(morse_code)
+    minn=min(morse_code)
+    avgn=(maxn+minn)/2
+
+    for j in morse_code:
+        if j==0:
+            count_00+=1
+        else:
+            if count_00<avgn:
+                if j>avgn:
+                    words+='-'
+                    count_00=0
+                elif j<avgn:
+                    words+='.'
+                    count_00=0
+                    
+            else:
+                cleanlst_morsecode.append(words)
+                if j>avgn:
+                    words='-'
+                    count_00=0
+                elif j<avgn:
+                    words='.'
+                    count_00=0
+
+                
+                
+"""       
+while True :
+    ldr_val = board . analog [ ldr_pin ]. read ()
+    record_list.append(ldr_val)
+    initiat()
+    #time.sleep(0.001)
+    if i!=0:
+        print("Loop 1 break")
+        break"""
+    
+while True :
+    ldr_val = board . analog [ ldr_pin ]. read ()
+
+    if i==0:
+        ldr_val = board . analog [ ldr_pin ]. read ()
+        record_list.append(ldr_val)
+        initiat()
+    else:
+        light_on(i)
+    
+        if light==1:
+            count+=1
+            count_0=0
+        else:
+            morse_code.append(count)
+            count=0
+            count_0+=1
+            if count_0>100:
+                clean_morsecode()
+                cleanlst_morsecode.append(words)
+                print(cleanlst_morsecode)
+                decoding_()
+                
+                break
+           
+        record_list.append(light)
+    time.sleep(0.001)
+
+
+    """
+    light_on(i)
+    
+    if light==1:
+        count+=1
+        count_0=0
+    else:
+        morse_code.append(count)
+        count=0
+        count_0+=1
+        if count_0>50:
+            break
+       
+    record_list.append(light)
+    time.sleep(0.001)"""
+
+"""
+clean_morsecode()
+cleanlst_morsecode.append(words)
+print(cleanlst_morsecode)
+decoding_()"""
